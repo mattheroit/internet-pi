@@ -11,7 +11,11 @@ networks:
   back-tier:
     name: internet-monitoring-back-tier
     external: true
-
+{% if pihole_dhcp_enable %}
+  macvlan:
+    name: internet-monitoring-macvlan
+    external: true
+{% endif %}
 
 # More info at https://github.com/pi-hole/docker-pi-hole/ and https://docs.pi-hole.net/
 services:
@@ -33,22 +37,33 @@ services:
     environment:
       TZ: '{{ pihole_timezone }}'
       FTLCONF_webserver_api_password: '{{ pihole_password }}'
-      FTLCONF_dns_reply_host_IPv4: '{{ ansible_facts['default_ipv4']['address'] }}'
       FTLCONF_dns_listeningMode: 'SINGLE'
+{% if pihole_dhcp_enable %}
+      FTLCONF_dns_reply_host_IPv4: '{{ pihole_ipv4_address }}'
+      FTLCONF_dhcp_active: 'true'
+      FTLCONF_dhcp_router: '{{ pihole_dhcp_gateway }}'
+      FTLCONF_dns_interface: 'eth1' { # TODO: remove hardcoded interface name #}
+{% else %}
+      FTLCONF_dns_reply_host_IPv4: '{{ ansible_facts['default_ipv4']['address'] }}'
       FTLCONF_dns_interface: '{{ ansible_facts['default_ipv4']['interface'] }}'
+{% endif %}
 {% if domain_name_enable and domain_name and domain_pihole %}
       VIRTUAL_HOST: {{ domain_pihole }}.{{ domain_name }}
       VIRTUAL_PORT: 80
       PROXY_LOCATION: {{ domain_pihole }}
 {% endif %}
     networks:
-      - back-tier
+      back-tier:
 {% if domain_name_enable and domain_name and domain_pihole %}
-      - front-tier
+      front-tier:
+{% endif %}
+{% if pihole_dhcp_enable %}
+      macvlan:
+        ipv4_address: {{ pihole_ipv4_address }}
 {% endif %}
     dns:
       - 127.0.0.1
-      - 8.8.8.8
+      - 1.1.1.1
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - './etc-pihole/:/etc/pihole/'

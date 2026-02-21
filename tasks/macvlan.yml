@@ -1,0 +1,18 @@
+- name: Check if macVLAN network exists
+  shell: docker network inspect internet-monitoring-macvlan
+  register: macvlan_network_check
+  failed_when: false
+  changed_when: false
+
+- name: Create macVLAN network for Pi-hole
+  community.docker.docker_network:
+    name: internet-monitoring-macvlan
+    driver: macvlan
+    driver_options:
+      parent: eth0
+    ipam_driver: default
+    ipam_config:
+      - subnet: '{{ pihole_dhcp_subnet }}'
+        gateway: '{{ pihole_dhcp_gateway }}'
+    state: present
+  when: macvlan_network_check.rc != 0

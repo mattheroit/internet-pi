@@ -5,7 +5,7 @@
 
   pre_tasks:
     - name: Load configuration (with defaults from example file).
-      ansible.builtin.include_vars: "{{ item }}"
+      ansible.builtin.include_vars: '{{ item }}'
       loop:
         - example.config.yml
         - config.yml
@@ -30,6 +30,10 @@
   tasks:
     - name: Setup Docker.
       ansible.builtin.import_tasks: tasks/docker.yml
+
+    - name: Setup macVLAN for Pi hole.
+      ansible.builtin.import_tasks: tasks/macvlan.yml
+      when: pihole_dhcp_enable
 
     - name: Set up Internet Monitoring.
       ansible.builtin.import_tasks: tasks/internet-monitoring.yml
