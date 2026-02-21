@@ -33,7 +33,7 @@
 
     - name: Setup macVLAN for Pi hole.
       ansible.builtin.import_tasks: tasks/macvlan.yml
-      when: pihole_dhcp_enable
+      when: pihole_dhcp_enable and pihole_enable
 
     - name: Set up Internet Monitoring.
       ansible.builtin.import_tasks: tasks/internet-monitoring.yml
